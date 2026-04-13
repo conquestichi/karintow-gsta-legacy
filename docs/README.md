@@ -1,7 +1,7 @@
 # Gスタ撮影会 HP刷新プロジェクト 設計ドキュメント
 
 最終更新: 2026-04-13
-バージョン: v2.1 (デザイン方針確定版 — 白ベース×赤 / Freshインスパイア)
+バージョン: v2.2 (CI/CD仕込み版)
 
 ---
 
@@ -24,6 +24,7 @@ HP刷新プロジェクトにおける、システム全体の設計仕様書で
 | D | [04-infrastructure.md](./04-infrastructure.md) | 技術スタック・インフラ・コスト |
 | E | [05-migration-plan.md](./05-migration-plan.md) | 旧→新WP移行計画・データ移管手順 |
 | F | [06-design-direction.md](./06-design-direction.md) | デザイン方針・カラー・タイポ・装飾 |
+| G | [07-ci-cd.md](./07-ci-cd.md) | CI/CD・GitHub Actions・自動デプロイ |
 
 ## ステータス記号
 
@@ -43,26 +44,40 @@ HP刷新プロジェクトにおける、システム全体の設計仕様書で
 - **システム保守**: 司令官
 - **日常運用**: KARINTOW側スタッフ
 
-## v2.0 変更履歴（v1.0 → v2.0）
+## リポジトリ構成
 
-**プラットフォーム転換**: Webflow → WordPress + SWELL
+```
+karintow-gsta-legacy/
+├── docs/                          ← 設計ドキュメント（このフォルダ）
+├── wp/
+│   └── themes/
+│       └── karintow-child/        ← SWELL子テーマ（自動デプロイ対象）
+├── legacy/                        ← 旧サイトwgetミラー（既存HTMLはルート直下）
+└── .github/workflows/
+    ├── docs-check.yml             ← docs検証（即動作）
+    └── deploy-wp.yml              ← 子テーマ自動デプロイ（Secrets待ち）
+```
 
-判断理由（詳細は `00-questions.md` の「案B選定経緯」参照）:
-- **コスト**: Webflow $23-39/月 → ConoHa WING ¥941/月で安価
-- **既存スキル**: KARINTOW担当者のWP経験を継承可能
-- **ロックイン回避**: WP標準で長期保守性◎、いつでも移行可
-- **構造的リスク回避**: 管理型ホスティングなのでroot喪失事故が起きない
-- **データ移行**: 旧WPからの移行が劇的に楽（WP→WP）
+## 変更履歴
 
-Webflow構築済みサイト（ID: `69d1f22c1d19cda39fee4fec`）は廃止予定。
+### v2.2 (2026-04-13): CI/CD仕込み
+- `.github/workflows/docs-check.yml` 追加（docs検証、即動作）
+- `.github/workflows/deploy-wp.yml` 追加（子テーマデプロイ、Secrets待ち）
+- `wp/themes/karintow-child/` スケルトン作成
+- `07-ci-cd.md` 追加
 
-## v2.1 変更履歴（v2.0 → v2.1）
+### v2.1 (2026-04-13): デザイン方針反転
+- ダーク×赤・質実剛健 → **白ベース×赤・キレイかわいい**
+- 参考筆頭: TIF2025 → **フレッシュ撮影会**
+- 装飾方針: グラスモーフィズム → **SVGオブジェクト散布**
+- `06-design-direction.md` 追加
 
-**デザイン方針の反転**: ダーク×赤・おじさん向け質実剛健 → **白ベース×赤・キレイかわいい**
+### v2.0 (2026-04-13): プラットフォーム転換
+- Webflow → **WordPress + SWELL + ConoHa WING**
+- コスト削減（¥1,738 → ¥941/月）
+- KARINTOW既存WPスキル継承
+- `05-migration-plan.md` 追加
+- Webflowサイト廃止予定
 
-- ブランド赤 `#d4002a` 確定
-- 背景を白ベース `#ffffff` に変更
-- 参考筆頭サイト: フレッシュ撮影会 (fresh-club.net) に切替
-- 装飾方針: グラスモーフィズム → SVGオブジェクト散布
-- 新規ファイル `06-design-direction.md` 追加
-- ターゲット（中年男性）は変わらず、「モデルさんを可愛く魅せる場」として設計
+### v1.0 (2026-04-13): 初版
+- Webflow前提で6章構成の設計docs作成

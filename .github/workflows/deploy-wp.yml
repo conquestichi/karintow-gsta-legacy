@@ -1,0 +1,111 @@
+name: deploy-wp
+
+# wp/themes/karintow-child/ を本番サーバーへ自動デプロイするワークフロー
+#
+# === Secrets 設定が必要 ===
+# 以下のリポジトリ Secrets を設定すると自動デプロイが有効化される：
+#   DEPLOY_HOST       : ConoHa WING の FTPサーバー (例: wing-web-XXX.conoha.jp)
+#   DEPLOY_USER       : FTPユーザー名
+#   DEPLOY_PASSWORD   : FTPパスワード
+#   DEPLOY_PORT       : ポート (通常 21 FTP / 22 SFTP / 990 FTPS)
+#   DEPLOY_PROTOCOL   : ftp / ftps / sftp
+#   DEPLOY_SERVER_DIR : サーバー側パス (例: /home/USERNAME/public_html/studio-g.net/wp-content/themes/karintow-child/)
+#
+# Secrets が未設定の場合、このワークフローは skip される（エラーにならない）
+#
+# 詳細は docs/07-ci-cd.md 参照
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'wp/themes/karintow-child/**'
+      - '.github/workflows/deploy-wp.yml'
+  workflow_dispatch:
+
+jobs:
+  check-secrets:
+    name: Check if secrets are configured
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - name: Check secrets presence
+        id: check
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
+        run: |
+          if [ -z "$HOST" ] || [ -z "$USER" ] || [ -z "$PASSWORD" ]; then
+            echo "configured=false" >> $GITHUB_OUTPUT
+            echo "::notice::Deploy secrets not yet configured. Skipping deploy."
+            echo "To enable, set DEPLOY_HOST / DEPLOY_USER / DEPLOY_PASSWORD in repository Secrets."
+          else
+            echo "configured=true" >> $GITHUB_OUTPUT
+            echo "::notice::Deploy secrets configured. Proceeding with deploy."
+          fi
+
+  deploy:
+    name: Deploy child theme to ConoHa WING
+    needs: check-secrets
+    if: needs.check-secrets.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Pre-deploy validation
+        run: |
+          set -e
+          # style.css に Theme Name が記述されているか確認
+          if ! grep -q "Theme Name:" wp/themes/karintow-child/style.css; then
+            echo "::error::wp/themes/karintow-child/style.css is missing 'Theme Name:' header"
+            exit 1
+          fi
+          # functions.php が存在するか確認
+          if [ ! -f wp/themes/karintow-child/functions.php ]; then
+            echo "::error::wp/themes/karintow-child/functions.php is missing"
+            exit 1
+          fi
+          echo "Pre-deploy validation passed"
+
+      - name: Deploy via FTP/FTPS/SFTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          port: ${{ secrets.DEPLOY_PORT || 21 }}
+          protocol: ${{ secrets.DEPLOY_PROTOCOL || 'ftps' }}
+          local-dir: ./wp/themes/karintow-child/
+          server-dir: ${{ secrets.DEPLOY_SERVER_DIR }}
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/README.md
+            **/.DS_Store
+
+      - name: Summary
+        run: |
+          echo "## Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target**: \`${{ secrets.DEPLOY_SERVER_DIR }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Protocol**: \`${{ secrets.DEPLOY_PROTOCOL || 'ftps' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+
+  skipped:
+    name: Deploy skipped (secrets not configured)
+    needs: check-secrets
+    if: needs.check-secrets.outputs.configured == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notice
+        run: |
+          echo "## Deploy Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Deploy secrets are not yet configured." >> $GITHUB_STEP_SUMMARY
+          echo "See \`docs/07-ci-cd.md\` for setup instructions." >> $GITHUB_STEP_SUMMARY

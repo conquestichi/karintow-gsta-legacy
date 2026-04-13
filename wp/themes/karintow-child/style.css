@@ -1,0 +1,188 @@
+@charset "UTF-8";
+/*
+Theme Name: Karintow Child
+Theme URI: https://studio-g.net/
+Description: Gスタ撮影会 カスタム子テーマ。SWELL を親テーマとして、Fresh インスパイアの白ベース × 赤デザインを実装する。
+Author: KARINTOW / 司令官
+Author URI: https://studio-g.net/
+Template: swell
+Version: 0.1.0
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: karintow-child
+*/
+
+/* ==========================================================================
+   karintow-child スタイル
+   設計方針の詳細は docs/06-design-direction.md を参照
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. カラー変数定義
+   -------------------------------------------------------------------------- */
+:root {
+  /* ブランド赤 */
+  --gsta-red: #d4002a;
+  --gsta-red-dark: #a30020;
+  --gsta-red-light: #fde8ec;
+
+  /* 背景 */
+  --gsta-bg: #ffffff;
+  --gsta-bg-sub: #fafafa;
+
+  /* テキスト */
+  --gsta-text-heading: #1a1a1a;
+  --gsta-text-body: #333333;
+  --gsta-text-meta: #888888;
+
+  /* ボーダー */
+  --gsta-border: #e5e5e5;
+  --gsta-border-light: #f0f0f0;
+}
+
+/* --------------------------------------------------------------------------
+   2. タイポグラフィ（英字飾り見出し）
+   -------------------------------------------------------------------------- */
+.section-label-en {
+  font-family: 'Outfit', 'Zen Kaku Gothic New', sans-serif;
+  font-size: 16px;
+  color: var(--gsta-red);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.section-heading-ja {
+  font-family: 'Zen Kaku Gothic New', 'Hiragino Sans', sans-serif;
+  font-size: 32px;
+  color: var(--gsta-text-heading);
+  font-weight: 700;
+  line-height: 1.4;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .section-heading-ja { font-size: 24px; }
+}
+
+/* --------------------------------------------------------------------------
+   3. SVG装飾配置ベース
+   -------------------------------------------------------------------------- */
+.decor-svg {
+  position: absolute;
+  z-index: -1;
+  opacity: 0.6;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* --------------------------------------------------------------------------
+   4. カード系（イベント・モデル）
+   -------------------------------------------------------------------------- */
+.gsta-card {
+  background: var(--gsta-bg);
+  border: 1px solid var(--gsta-border-light);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.gsta-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* --------------------------------------------------------------------------
+   5. 円形モデルサムネ（旧Gスタ資産継承）
+   -------------------------------------------------------------------------- */
+.model-thumb-round {
+  border-radius: 50%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: var(--gsta-bg-sub);
+}
+
+.model-thumb-round img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.model-thumb-round:hover img {
+  transform: scale(1.05);
+}
+
+/* --------------------------------------------------------------------------
+   6. 日付チップ（旧Gスタ黒 → 赤に色反転）
+   -------------------------------------------------------------------------- */
+.date-chip {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: var(--gsta-red);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Outfit', sans-serif;
+  line-height: 1;
+}
+
+.date-chip .day  { font-size: 24px; font-weight: 700; }
+.date-chip .mon  { font-size: 11px; margin-top: 4px; }
+.date-chip .year { font-size: 10px; opacity: 0.85; }
+
+/* --------------------------------------------------------------------------
+   7. ピルボタン
+   -------------------------------------------------------------------------- */
+.btn-pill {
+  display: inline-block;
+  padding: 16px 32px;
+  border-radius: 999px;
+  font-size: 17px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  text-align: center;
+  min-width: 200px;
+}
+
+.btn-pill--primary {
+  background: var(--gsta-red);
+  color: #fff;
+}
+
+.btn-pill--primary:hover {
+  background: var(--gsta-red-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(212, 0, 42, 0.25);
+  color: #fff;
+}
+
+.btn-pill--secondary {
+  background: #fff;
+  color: var(--gsta-red);
+  border: 2px solid var(--gsta-red);
+}
+
+.btn-pill--secondary:hover {
+  background: var(--gsta-red-light);
+  color: var(--gsta-red-dark);
+}
+
+/* --------------------------------------------------------------------------
+   8. 本文可読性（中年男性ターゲット向け）
+   -------------------------------------------------------------------------- */
+body {
+  font-size: 17px;
+  line-height: 1.8;
+  letter-spacing: 0.03em;
+  color: var(--gsta-text-body);
+}
+
+@media (max-width: 768px) {
+  body { font-size: 16px; }
+}

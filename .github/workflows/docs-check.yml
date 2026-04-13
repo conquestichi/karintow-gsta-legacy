@@ -1,0 +1,82 @@
+name: docs-check
+
+# docs/ 配下の設計ドキュメントを検証するワークフロー
+# push/PR のたびに実行される
+# Secrets 不要、仕込み直後から動作する
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs-check.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+  workflow_dispatch: # 手動実行も可能
+
+jobs:
+  verify:
+    name: Verify docs structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check required docs exist
+        run: |
+          set -e
+          REQUIRED=(
+            "docs/README.md"
+            "docs/00-questions.md"
+            "docs/01-sitemap.md"
+            "docs/02-data-model.md"
+            "docs/03-operations.md"
+            "docs/04-infrastructure.md"
+            "docs/05-migration-plan.md"
+            "docs/06-design-direction.md"
+          )
+          MISSING=0
+          for f in "${REQUIRED[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "::error file=$f::Required doc is missing"
+              MISSING=1
+            else
+              echo "OK: $f ($(wc -l < "$f") lines)"
+            fi
+          done
+          if [ "$MISSING" -eq 1 ]; then exit 1; fi
+
+      - name: Check markdown files are non-empty
+        run: |
+          set -e
+          for f in $(find docs -name "*.md"); do
+            SIZE=$(wc -c < "$f")
+            if [ "$SIZE" -lt 100 ]; then
+              echo "::warning file=$f::File is suspiciously small ($SIZE bytes)"
+            fi
+          done
+
+      - name: Check UTF-8 encoding
+        run: |
+          set -e
+          for f in $(find docs -name "*.md"); do
+            if ! iconv -f UTF-8 -t UTF-8 "$f" > /dev/null 2>&1; then
+              echo "::error file=$f::File is not valid UTF-8"
+              exit 1
+            fi
+          done
+          echo "All markdown files are valid UTF-8"
+
+      - name: Summary
+        run: |
+          echo "## Docs Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Lines | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          for f in $(find docs -name "*.md" | sort); do
+            LINES=$(wc -l < "$f")
+            SIZE=$(wc -c < "$f")
+            echo "| $f | $LINES | ${SIZE}B |" >> $GITHUB_STEP_SUMMARY
+          done
